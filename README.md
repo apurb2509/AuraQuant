@@ -9,6 +9,8 @@
 - [ ] 3D Visualization (Three.js)
 - [x] Backend LOB Ingestion (Raw Stream)
 - [ ] LOB Reconstruction Logic (Redis)
+- [x] LOB Reconstruction Logic (Redis Sorted Sets)
+- [ ] Order Flow Imbalance (OFI) Calculation
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
