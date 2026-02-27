@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { Activity, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import LiquidityScene from './components/LiquidityScene';
 
 const socket = io("http://localhost:5000");
 
@@ -45,6 +46,10 @@ function App() {
             Positive OFI indicates institutional buying pressure.
           </p>
         </div>
+
+        <div className="mt-6">
+  <LiquidityScene bids={data.bids} asks={data.asks} />
+</div>
 
         {/* Micro-Price Card */}
         <div className="bg-[#111] p-6 rounded-xl border border-gray-800">

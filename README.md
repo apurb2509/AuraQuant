@@ -24,6 +24,12 @@
 - [x] Real-time Order Flow Imbalance (OFI)
 - [x] Weighted Micro-Price Analytics
 - [ ] Three.js 3D Liquidity Rendering
+- [x] Unified Analytics Engine (OFI + Micro-Price)
+- [x] Corrected Backend Event Loop
+- [ ] Three.js 3D Liquidity Landscape (Component Initialized)
+- [x] Fixed Tailwind v4 Directive Overlap
+- [x] Resolved ESLint Unused Variable Warnings
+- [x] 3D Liquidity Bars Rendering (Bids/Asks)
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
