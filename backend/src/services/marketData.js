@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const { updateOrderBook } = require('./lobEngine');
-const { calculateOFI } = require('./analytics'); // New
+const { calculateMetrics } = require('./analytics'); // Import the unified function
 
 const initializeMarketData = (io) => {
     const ws = new WebSocket(process.env.EXCHANGE_WS_URL);
@@ -16,15 +16,17 @@ const initializeMarketData = (io) => {
             // 1. Update LOB in Redis
             await updateOrderBook(symbol, bids, asks);
 
-            // 2. Calculate Intelligence Metric (OFI)
-            const ofi = calculateOFI(bids, asks);
+            // 2. Calculate Intelligence Metrics (OFI + MicroPrice)
+            // This MUST be inside the message loop
+            const { ofi, microPrice } = calculateMetrics(bids, asks);
 
             // 3. Broadcast to Frontend
             io.emit('market-update', {
                 symbol,
                 bids: bids.slice(0, 10),
                 asks: asks.slice(0, 10),
-                ofi: ofi.toFixed(4), // Push the imbalance metric
+                ofi: ofi.toFixed(4),
+                microPrice, 
                 timestamp: streamData.E
             });
         } catch (error) {

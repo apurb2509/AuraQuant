@@ -21,6 +21,9 @@
 - [x] Responsive Dashboard UI with Tailwind
 - [x] Custom HFT-themed Styling (Dark Grid)
 - [x] End-to-End Connectivity (Exchange -> Redis -> UI)
+- [x] Real-time Order Flow Imbalance (OFI)
+- [x] Weighted Micro-Price Analytics
+- [ ] Three.js 3D Liquidity Rendering
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
