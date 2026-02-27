@@ -30,6 +30,12 @@
 - [x] Fixed Tailwind v4 Directive Overlap
 - [x] Resolved ESLint Unused Variable Warnings
 - [x] 3D Liquidity Bars Rendering (Bids/Asks)
+- [x] 3D Liquidity Landscape (Bars Rendering)
+- [x] Dynamic Volume-based Heatmap (Emissive Glow)
+- [ ] VPIN Flow Toxicity Indicator
+- [x] Implemented Bento Grid Dashboard (No-scroll Viewport)
+- [x] Unlocked 3D Camera Controls (Pan/Rotate/Zoom)
+- [x] Optimized CSS for 100vh Layout
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
