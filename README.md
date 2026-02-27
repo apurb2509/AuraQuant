@@ -11,6 +11,8 @@
 - [ ] LOB Reconstruction Logic (Redis)
 - [x] LOB Reconstruction Logic (Redis Sorted Sets)
 - [ ] Order Flow Imbalance (OFI) Calculation
+- [x] Backend WebSocket Connectivity (Resolved DNS/ISP issues)
+- [ ] Order Flow Imbalance (OFI) Calculation
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io

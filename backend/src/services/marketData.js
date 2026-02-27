@@ -6,6 +6,16 @@ const initializeMarketData = (io) => {
 
     ws.on('open', () => console.log('✅ Exchange Feed Connected'));
 
+    ws.on('open', () => {
+        console.log('✅ Exchange Feed Connected');
+        // Keep the connection alive
+        setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.ping();
+            }
+        }, 30000);
+    });
+
     ws.on('message', async (data) => {
         try {
             const streamData = JSON.parse(data);
@@ -22,7 +32,7 @@ const initializeMarketData = (io) => {
                 symbol,
                 bids: bids.slice(0, 10),
                 asks: asks.slice(0, 10),
-                timestamp: streamData.E
+                timestamp: streamData.E            
             });
         } catch (error) {
             console.error('Data Processing Error:', error);
