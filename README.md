@@ -7,6 +7,8 @@
 - [ ] Backend LOB Reconstruction Engine
 - [ ] Redis Integration
 - [ ] 3D Visualization (Three.js)
+- [x] Backend LOB Ingestion (Raw Stream)
+- [ ] LOB Reconstruction Logic (Redis)
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
