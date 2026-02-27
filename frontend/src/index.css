@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #050505;
+  background-image: 
+    linear-gradient(rgba(18, 18, 18, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 18, 18, 0.5) 1px, transparent 1px);
+  background-size: 30px 30px;
+  color: #ffffff;
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Inter', monospace;
+}
+
+/* Custom scrollbar for that sleek feel */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
