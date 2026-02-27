@@ -1,38 +1,31 @@
 const WebSocket = require('ws');
 const { updateOrderBook } = require('./lobEngine');
+const { calculateOFI } = require('./analytics'); // New
 
 const initializeMarketData = (io) => {
     const ws = new WebSocket(process.env.EXCHANGE_WS_URL);
 
     ws.on('open', () => console.log('✅ Exchange Feed Connected'));
 
-    ws.on('open', () => {
-        console.log('✅ Exchange Feed Connected');
-        // Keep the connection alive
-        setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.ping();
-            }
-        }, 30000);
-    });
-
     ws.on('message', async (data) => {
         try {
             const streamData = JSON.parse(data);
             const symbol = 'BTCUSDT';
-
-            // 'b' is bids, 'a' is asks in Binance stream
             const { b: bids, a: asks } = streamData;
 
-            // 1. Update the Memory Layer (Redis)
+            // 1. Update LOB in Redis
             await updateOrderBook(symbol, bids, asks);
 
-            // 2. Push top 10 levels to Frontend via Socket.io
+            // 2. Calculate Intelligence Metric (OFI)
+            const ofi = calculateOFI(bids, asks);
+
+            // 3. Broadcast to Frontend
             io.emit('market-update', {
                 symbol,
                 bids: bids.slice(0, 10),
                 asks: asks.slice(0, 10),
-                timestamp: streamData.E            
+                ofi: ofi.toFixed(4), // Push the imbalance metric
+                timestamp: streamData.E
             });
         } catch (error) {
             console.error('Data Processing Error:', error);

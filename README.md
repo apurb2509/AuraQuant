@@ -13,6 +13,8 @@
 - [ ] Order Flow Imbalance (OFI) Calculation
 - [x] Backend WebSocket Connectivity (Resolved DNS/ISP issues)
 - [ ] Order Flow Imbalance (OFI) Calculation
+- [x] Order Flow Imbalance (OFI) Calculation logic
+- [ ] Micro-Price Calculation & VPIN
 
 ## Tech Stack
 - **Backend:** Node.js, Express, Socket.io
