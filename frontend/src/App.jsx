@@ -1,27 +1,54 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
-import { Activity, ShieldAlert, Zap, Layers, Terminal, X, MousePointer2, Play, BarChart3 } from "lucide-react";
+import { Activity, ShieldAlert, Zap, Layers, Terminal, X, MousePointer2, Play, BarChart3, Clock, Radio } from "lucide-react";
 import LiquidityScene from "./components/LiquidityScene";
 
 const socket = io("http://localhost:5000");
 
 function App() {
-  const [data, setData] = useState({ 
-    bids: [], 
-    asks: [], 
-    ofi: "0.0000", 
-    microPrice: "0.00", 
-    vpin: "0.0000",
-    aiBrief: "" 
+  // Core Data States
+  const [liveData, setLiveData] = useState({ 
+    bids: [], asks: [], ofi: "0.0000", microPrice: "0.00", vpin: "0.0000", aiBrief: "" 
   });
+  const [history, setHistory] = useState([]);
+  const [replayIndex, setReplayIndex] = useState(0);
+  
+  // UI States
+  const [mode, setMode] = useState("LIVE"); // LIVE or REPLAY
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedQueue, setSelectedQueue] = useState([]); 
   const [focusView, setFocusView] = useState([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // Active Data Selector (Switches between Live and Historical Frame)
+  const data = mode === "LIVE" ? liveData : (history[replayIndex] || liveData);
 
   useEffect(() => {
-    socket.on("market-update", (payload) => setData(payload));
+    socket.on("market-update", (payload) => {
+      if (mode === "LIVE") setLiveData(payload);
+    });
     return () => socket.off("market-update");
-  }, []);
+  }, [mode]);
+
+  // Handle Mode Switching
+  const toggleMode = async () => {
+    if (mode === "LIVE") {
+      setIsLoadingHistory(true);
+      try {
+        const res = await fetch("http://localhost:5000/api/history");
+        const logs = await res.json();
+        setHistory(logs);
+        setMode("REPLAY");
+        setReplayIndex(logs.length - 1);
+      } catch (err) {
+        console.error("Failed to fetch history:", err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    } else {
+      setMode("LIVE");
+    }
+  };
 
   const handleToggleSelect = (id) => {
     if (isSelectMode) {
@@ -61,7 +88,7 @@ function App() {
   return (
     <div className="h-screen w-screen p-4 flex flex-col gap-4 bg-[#020617] text-slate-200 overflow-hidden font-mono">
       
-      {/* FULL FOCUS OVERLAY (Centering 1-3 Cards) */}
+      {/* FOCUS OVERLAY */}
       {focusView.length > 0 && (
         <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-2xl p-12 flex flex-wrap items-center justify-center gap-10 animate-in fade-in duration-500">
           {focusView.map(id => (
@@ -86,7 +113,25 @@ function App() {
 
       {/* Header */}
       <header className="flex justify-between items-center px-2 flex-shrink-0">
-        <h1 className="text-xl font-black tracking-tighter text-white uppercase italic">Aura<span className="text-blue-500">Quant</span></h1>
+        <div className="flex items-center gap-6">
+          <h1 className="text-xl font-black tracking-tighter text-white uppercase italic">Aura<span className="text-blue-500">Quant</span></h1>
+          
+          {/* Mode Switcher */}
+          <div className="flex bg-white/5 rounded-full p-1 border border-white/10">
+            <button 
+              onClick={toggleMode}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-bold transition-all ${mode === "LIVE" ? "bg-green-500 text-black" : "text-gray-500"}`}
+            >
+              <Radio size={12} /> {isLoadingHistory ? "FETCHING..." : "LIVE"}
+            </button>
+            <button 
+              onClick={toggleMode}
+              className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[9px] font-bold transition-all ${mode === "REPLAY" ? "bg-blue-600 text-white" : "text-gray-500"}`}
+            >
+              <Clock size={12} /> REPLAY
+            </button>
+          </div>
+        </div>
         
         <div className="flex gap-4">
           {isSelectMode && selectedQueue.length > 0 && (
@@ -100,17 +145,28 @@ function App() {
         </div>
       </header>
 
-      {/* Grid: Non-scrolling bento layout */}
+      {/* Replay Controller Bar */}
+      {mode === "REPLAY" && history.length > 0 && (
+        <div className="glass-card rounded-[1.5rem] px-6 py-3 flex items-center gap-4 border-blue-500/30 animate-in slide-in-from-top-4 duration-500">
+          <span className="text-[10px] font-bold text-blue-400 whitespace-nowrap uppercase tracking-widest">Historical Tape</span>
+          <input 
+            type="range" min="0" max={history.length - 1} value={replayIndex} 
+            onChange={(e) => setReplayIndex(parseInt(e.target.value))}
+            className="flex-1 h-1 bg-gray-800 rounded-lg accent-blue-500 cursor-pointer"
+          />
+          <div className="text-[10px] font-mono text-gray-500">
+            FRAME_{replayIndex}/{history.length - 1} 
+            <span className="ml-4 text-gray-700">[{new Date(history[replayIndex]?.timestamp).toLocaleTimeString()}]</span>
+          </div>
+        </div>
+      )}
+
+      {/* Main Grid Content */}
       <main className="flex-1 grid grid-cols-12 grid-rows-6 gap-4 min-h-0">
-        <div className="col-span-4 row-span-2">
-          {renderCard('micro', 'Micro-Price', `$${data.microPrice}`, <Zap className="text-blue-400" />, 'Weighted Index', 'text-blue-400')}
-        </div>
-        <div className="col-span-4 row-span-2">
-          {renderCard('ofi', 'Order Flow Imbalance', data.ofi, <Layers className="text-green-400" />, 'Pressure Delta', 'text-green-400')}
-        </div>
+        <div className="col-span-4 row-span-2">{renderCard('micro', 'Micro-Price', `$${data.microPrice}`, <Zap className="text-blue-400" />, 'Weighted Index', 'text-blue-400')}</div>
+        <div className="col-span-4 row-span-2">{renderCard('ofi', 'Order Flow Imbalance', data.ofi, <Layers className="text-green-400" />, 'Pressure Delta', 'text-green-400')}</div>
         
-        {/* LOB Snapshot */}
-        <div onClick={() => handleToggleSelect('lob')} className={`col-span-4 row-span-3 glass-card rounded-[1.5rem] p-5 flex flex-col overflow-hidden transition-all duration-300 ${isSelectMode ? 'cursor-pointer hover:border-blue-500/50' : 'cursor-default'} ${isSelectMode && selectedQueue.includes('lob') ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''}`}>
+        <div onClick={() => handleToggleSelect('lob')} className={`col-span-4 row-span-3 glass-card rounded-[1.5rem] p-5 flex flex-col overflow-hidden transition-all duration-300 ${isSelectMode ? 'cursor-pointer hover:border-blue-500/50' : ''} ${isSelectMode && selectedQueue.includes('lob') ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''}`}>
           <h2 className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2 border-b border-white/5 pb-2"><Terminal size={14} /> LOB_RECONSTRUCTION</h2>
           <div className="flex-1 grid grid-cols-2 gap-4 text-[9px] font-mono overflow-hidden">
             <div className="text-red-400/80 space-y-0.5">{data.asks?.slice(0, 10).map((a, i) => <div key={i}>{a[0]}</div>)}</div>
@@ -118,23 +174,19 @@ function App() {
           </div>
         </div>
 
-        <div className="col-span-4 row-span-1">
-          {renderCard('vpin', 'Flow Toxicity', data.vpin, <ShieldAlert className="text-yellow-500" />, 'VPIN Index', 'text-yellow-500')}
-        </div>
+        <div className="col-span-4 row-span-1">{renderCard('vpin', 'Flow Toxicity', data.vpin, <ShieldAlert className="text-yellow-500" />, 'VPIN Index', 'text-yellow-500')}</div>
 
-        {/* 3D Map Landscape */}
         <div className="col-span-8 row-span-4 glass-card rounded-[2rem] overflow-hidden relative">
           <LiquidityScene bids={data.bids} asks={data.asks} />
         </div>
 
-        {/* Institutional AI Strategy Brief */}
         <div className="col-span-4 row-span-2 glass-card rounded-[2rem] p-6 flex flex-col overflow-hidden">
           <h2 className="text-[9px] font-black text-blue-500/50 uppercase tracking-widest mb-3 border-b border-white/5 pb-1 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-            Institutional_Strategy_Brief
+            <div className={`w-1.5 h-1.5 rounded-full ${mode === "LIVE" ? "bg-blue-500 animate-pulse" : "bg-gray-600"}`} />
+            {mode === "LIVE" ? "Institutional_Strategy_Brief" : "Historical_Insight_Log"}
           </h2>
           <div className="text-[10px] font-mono text-blue-400 leading-relaxed italic uppercase mb-3 flex-1 overflow-y-auto">
-            {data.aiBrief || "Awaiting LLM Market Analysis..."}
+            {data.aiBrief || "Awaiting LLM Analysis..."}
           </div>
           <div className="text-[9px] font-mono text-gray-600 space-y-1 mt-auto border-t border-white/5 pt-2">
             <div className="flex justify-between">
@@ -143,12 +195,7 @@ function App() {
                 {parseFloat(data.ofi) >= 0 ? "BULLISH_PRESSURE" : "BEARISH_PRESSURE"}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span>VPIN_TOXICITY:</span> 
-              <span className={parseFloat(data.vpin) > 0.6 ? "text-red-500" : "text-yellow-500"}>
-                {data.vpin}
-              </span>
-            </div>
+            <div className="flex justify-between"><span>VPIN_TOXICITY:</span> <span className={parseFloat(data.vpin) > 0.6 ? "text-red-500" : "text-yellow-500"}>{data.vpin}</span></div>
           </div>
         </div>
       </main>
